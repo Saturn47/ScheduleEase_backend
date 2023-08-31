@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
   password: String
 });
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model('/users', userSchema);
 
 // Handle user registration
 app.post('/register', async (req, res) => {
