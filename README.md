@@ -1,2 +1,2 @@
 # ScheduleEase_backend
-open shot.ai project - an appointment booking application
+Oneshot.ai project - an appointment booking application
