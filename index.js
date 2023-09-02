@@ -32,7 +32,11 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('/users', userSchema);
 
 // Handle user registration
-app.post('/register', async (req, res) => {
+app.route('/register')
+  .get((req,res) => {
+    //handle get requests
+  })
+  .post(async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const newUser = new User({ name, email, password });
@@ -45,23 +49,31 @@ app.post('/register', async (req, res) => {
 });
 
 // Handle user login
-app.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email, password });
-    if (user) {
-      res.status(200).json({ message: 'Login successful' });
-    } else {
-      res.status(401).json({ error: 'Invalid credentials' });
+app.route('/login')
+  .get((req, res) => {
+    //handle get requests
+  })
+  .post(async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      const user = await User.findOne({ email, password });
+      if (user) {
+        res.status(200).json({ message: 'Login successful' });
+      } else {
+        res.status(401).json({ error: 'Invalid credentials' });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ error: 'An error occurred during login' });
     }
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'An error occurred during login' });
-  }
-});
+  })
 
 // Endpoint to book an appointment
-app.post('/book-appointment', async (req, res) => {
+app.route('/book-appointment')
+  .get((req,res) => {
+    //handle get requests
+  })
+  .post('/book-appointment', async (req, res) => {
   try {
     const { event } = req.body;
 
@@ -76,6 +88,11 @@ app.post('/book-appointment', async (req, res) => {
   }
 });
 
+
+const port = process.env.PORT || 8000;
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
 
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
