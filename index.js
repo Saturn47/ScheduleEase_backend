@@ -73,7 +73,7 @@ app.route('/book-appointment')
   .get((req,res) => {
     //handle get requests
   })
-  .post('/book-appointment', async (req, res) => {
+  .post(async (req, res) => {
   try {
     const { event } = req.body;
 
