@@ -1,11 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const Appointment = require('./appointments');
 const bodyParser = require('body-parser');
+const nodemailer = require('nodemailer'); // For sending OTP via email
+const randomstring = require('randomstring'); // For generating random OTP
 require('dotenv').config();
-const app = express();
 
+const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -24,70 +25,70 @@ mongoose.connect(mongo_url, {
 
 // Define User schema and model
 const userSchema = new mongoose.Schema({
-  name: String,
   email: String,
-  password: String
+  otp: String // Store OTP in user document
 });
 
-const User = mongoose.model('/users', userSchema);
+const User = mongoose.model('userdetails', userSchema);
 
-// Handle user registration
-app.route('/register')
-  .get((req,res) => {
-    //handle get requests
-  })
-  .post(async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-    const newUser = new User({ name, email, password });
-    await newUser.save();
-    res.status(201).json({ message: 'Registration successful' });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'An error occurred during registration' });
-  }
-});
+// Function to send OTP via email (you can use a similar function for SMS)
+async function sendOTPByEmail(email, otp) {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail', // e.g., Gmail
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.PASSWORD
+    }
+  });
 
-// Handle user login
-app.route('/login')
-  .get((req, res) => {
-    //handle get requests
-  })
+  const mailOptions = {
+    from: process.env.EMAIL,
+    to: email,
+    subject: 'OTP for Login',
+    text: `Your OTP for login is: ${otp}`
+  };
+
+  await transporter.sendMail(mailOptions);
+}
+
+// Handle OTP request
+app.route('/request-otp')
   .post(async (req, res) => {
     try {
-      const { email, password } = req.body;
-      const user = await User.findOne({ email, password });
+      const { email } = req.body;
+
+      // Generate a random OTP
+      const otp = randomstring.generate(6);
+
+      // Store the OTP in the user's document
+      const newUser = new User({ email, otp });
+      await newUser.save();
+      await sendOTPByEmail(email, otp);
+
+      res.status(200).json({ message: 'OTP sent successfully' });
+    } catch (error) {
+      console.error('OTP request error:', error);
+      res.status(500).json({ error: 'An error occurred while requesting OTP' });
+    }
+  });
+
+// Handle OTP-based login
+app.route('/login')
+  .post(async (req, res) => {
+    try {
+      const { email, otp } = req.body;
+      const user = await User.findOne({ email, otp });
+
       if (user) {
         res.status(200).json({ message: 'Login successful' });
       } else {
-        res.status(401).json({ error: 'Invalid credentials' });
+        res.status(401).json({ error: 'Invalid OTP' });
       }
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ error: 'An error occurred during login' });
     }
-  })
-
-// Endpoint to book an appointment
-app.route('/book-appointment')
-  .get((req,res) => {
-    //handle get requests
-  })
-  .post(async (req, res) => {
-  try {
-    const { event } = req.body;
-
-    // Save the event in the MongoDB collection
-    const newAppointment = new Appointment(event);
-    await newAppointment.save();
-
-    res.status(201).json({ message: 'Appointment booked successfully' });
-  } catch (error) {
-    console.error('Error booking appointment:', error);
-    res.status(500).json({ error: 'An error occurred while booking appointment' });
-  }
-});
-
+  });
 
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
